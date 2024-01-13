@@ -1,24 +1,24 @@
-use actix_web::{
-    dev::Server,
-    web::{self, Data},
-    App, HttpResponse, HttpServer, Responder,
-};
+use actix_web::{dev::Server, web, App, HttpResponse, HttpServer, Responder};
 use std::net::TcpListener;
 mod engine;
 use engine::EngineCommunicator;
+use std::sync::Mutex;
 
 async fn health_check() -> impl Responder {
     HttpResponse::Ok()
 }
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
-    let communicator = web::Data::new(EngineCommunicator::new());
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    let communicator = web::Data::new(Mutex::new(EngineCommunicator::new()));
+    println!("hi from run");
     let server: Server = HttpServer::new(move || {
         App::new()
             .route("/health_check", web::get().to(health_check))
             .app_data(communicator.clone())
             .service(
                 web::scope("/search")
+                    .route("/test", web::get().to(health_check))
                     .route("/start", web::post().to(EngineCommunicator::start_search))
                     .route("/info", web::get().to(EngineCommunicator::get_info)),
             )

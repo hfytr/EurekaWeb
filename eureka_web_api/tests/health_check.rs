@@ -1,6 +1,4 @@
-use std::net::TcpListener;
-use actix_web::dev::Server;
-use eureka_web_api::{run, spawn_app};
+use eureka_web_api::spawn_app;
 
 #[tokio::test]
 async fn health_check_works() {

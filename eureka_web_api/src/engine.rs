@@ -14,7 +14,6 @@ pub struct SearchRequest {
 }
 
 pub struct EngineCommunicator {
-    engine_process: process::Child,
     engine_in: process::ChildStdin,
     engine_out: tokio::io::BufReader<process::ChildStdout>,
     currently_searching: bool,
@@ -22,7 +21,7 @@ pub struct EngineCommunicator {
 
 impl EngineCommunicator {
     pub fn new() -> EngineCommunicator {
-        let mut handle = process::Command::new("Eureka")
+        let mut handle = process::Command::new("engine/EurekaUCI")
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .spawn()
@@ -31,7 +30,6 @@ impl EngineCommunicator {
         let handle_out = tokio::io::BufReader::new(handle.stdout.take().unwrap());
 
         EngineCommunicator {
-            engine_process: handle,
             engine_in: handle_in,
             engine_out: handle_out,
             currently_searching: false,
@@ -42,6 +40,7 @@ impl EngineCommunicator {
         request: web::Form<SearchRequest>,
         engine_handle: web::Data<Mutex<EngineCommunicator>>,
     ) -> impl Responder {
+        println!("hi from start_search");
         let mut engine_handle = engine_handle.lock().unwrap();
         engine_handle.currently_searching = true;
         let go_cmd = format!(
@@ -61,6 +60,7 @@ impl EngineCommunicator {
     }
 
     pub async fn get_info(engine_handle: web::Data<Mutex<EngineCommunicator>>) -> impl Responder {
+        println!("hi from get_info");
         let mut engine_handle = engine_handle.lock().unwrap();
 
         if !engine_handle.currently_searching {
@@ -68,27 +68,19 @@ impl EngineCommunicator {
                 .body("no search started, start a search with post request to /search/start");
         }
 
-        let mut input: String = String::new();
-        engine_handle
-            .engine_out
-            .read_line(&mut input)
-            .await
-            .unwrap();
-        let response_type: &str = if input.as_bytes()[0] == 'i' as u8 {
+        let mut body: String = String::new();
+        engine_handle.engine_out.read_line(&mut body).await.unwrap();
+        let response_type: &str = if body.as_bytes()[0] == 'i' as u8 {
             "info"
         } else {
             "move"
         };
 
-        let mut body: String = input.clone();
         // in case of info, need to read extra line for pv
         if response_type == "info" {
-            engine_handle
-                .engine_out
-                .read_line(&mut input)
-                .await
-                .unwrap();
-            body.push_str(&input);
+            let mut pv: String = String::new();
+            engine_handle.engine_out.read_line(&mut pv).await.unwrap();
+            body.push_str(&pv);
         } else {
             engine_handle.currently_searching = false;
         }
