@@ -1,0 +1,19 @@
+[package]
+name = "eureka_web_api"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+path = 'src/lib.rs'
+
+[[bin]]
+path = "src/main.rs"
+name = "eureka_web_api"
+
+[dependencies]
+actix-web = "4.4.1"
+serde = { version = "1.0.195", features = ["derive"] }
+tokio = { version = "1.35.1", features = ["full"] }
+
+[dev-dependencies]
+reqwest = "0.11"
