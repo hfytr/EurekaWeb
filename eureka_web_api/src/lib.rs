@@ -1,4 +1,4 @@
-use actix_web::{dev::Server, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{dev::Server, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use std::net::TcpListener;
 mod engine;
 use engine::EngineCommunicator;
@@ -14,11 +14,11 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     println!("hi from run");
     let server: Server = HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .route("/health_check", web::get().to(health_check))
             .app_data(communicator.clone())
             .service(
                 web::scope("/search")
-                    .route("/test", web::get().to(health_check))
                     .route("/start", web::post().to(EngineCommunicator::start_search))
                     .route("/info", web::get().to(EngineCommunicator::get_info)),
             )

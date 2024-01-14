@@ -1,4 +1,5 @@
 use actix_web::{web, HttpResponse, Responder};
+use log::debug;
 use serde::Deserialize;
 use std::process::Stdio;
 use std::sync::Mutex;
