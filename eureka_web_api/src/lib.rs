@@ -1,8 +1,8 @@
 use actix_web::{dev::Server, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
+use actix_cors::Cors;
 use std::net::TcpListener;
 mod engine;
-use engine::EngineCommunicator;
-use std::sync::Mutex;
+use engine::search;
 
 async fn health_check() -> impl Responder {
     HttpResponse::Ok()
@@ -10,18 +10,16 @@ async fn health_check() -> impl Responder {
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
-    let communicator = web::Data::new(Mutex::new(EngineCommunicator::new()));
-    println!("hi from run");
     let server: Server = HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("localhost:3000")
+            .allowed_methods(vec!["GET", "POST"]);
+            // .allowed_headers(vec![]);
         App::new()
+            .wrap(cors)
             .wrap(Logger::default())
             .route("/health_check", web::get().to(health_check))
-            .app_data(communicator.clone())
-            .service(
-                web::scope("/search")
-                    .route("/start", web::post().to(EngineCommunicator::start_search))
-                    .route("/info", web::get().to(EngineCommunicator::get_info)),
-            )
+            .route("/search", web::get().to(search))
     })
     .listen(listener)?
     .run();
@@ -29,7 +27,7 @@ pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
 }
 
 pub fn spawn_app() -> String {
-    let listener: TcpListener = TcpListener::bind("127.0.0.1:0").expect("failed to bind port");
+    let listener: TcpListener = TcpListener::bind("127.0.0.1:8080").expect("failed to bind port");
     let port: u16 = listener.local_addr().unwrap().port();
     let server: Server = run(listener).expect("run() failed");
     let _ = tokio::spawn(server);
