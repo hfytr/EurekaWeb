@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
 import { Chess } from "chess.js";
 import CustomDialog from "./CustomDialog.js";
@@ -8,7 +8,6 @@ function Game({ players, room, orientation, cleanup }) {
   const chess = useMemo(() => new Chess(), []); // <- 1
   const [fen, setFen] = useState(chess.fen()); // <- 2
   const [over, setOver] = useState("");
-  const [posts, setPosts] = useState([]);
 
   const makeAMove = useCallback(
     (move) => {
@@ -42,9 +41,19 @@ function Game({ players, room, orientation, cleanup }) {
 
   async function getEngineMove(wtime, btime, winc, binc) {
     const request_fen = chess.fen().split(" ").join("+").split("/").join("%2F");
-    const request = "fen=" + request_fen + "&wtime=" + String(wtime) + "&btime=" + String(btime) + "&winc=" + String(winc) + "&binc=" + String(binc)
-    console.log(request)
-    const response = await axios.get("http://127.0.0.1:8080/search" + request);
+    const params = new URLSearchParams();
+    params.append("fen", request_fen);
+    params.append("wtime", wtime);
+    params.append("btime", btime);
+    params.append("winc", winc);
+    params.append("binc", binc);
+    const response = await axios.get("http://127.0.0.1:8080/search/", params, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
+        "Content-Type": "x-www-urlencoded",
+      }
+    });
     const bestmove = response.split("\n")[2].split(" ")[1];
     chess.move(bestmove);
   }
@@ -63,7 +72,7 @@ function Game({ players, room, orientation, cleanup }) {
     // illegal move
     if (move === null) return false;
 
-    getEngineMove().then(
+    getEngineMove(600, 600, 0, 0).then(
       function(value) { chess.move(value); }
     );
 

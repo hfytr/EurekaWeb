@@ -1,0 +1,21 @@
+== Info: processing: http://127.0.0.1:8080
+== Info:   Trying 127.0.0.1:8080...
+== Info: Connected to 127.0.0.1 (127.0.0.1) port 8080
+=> Send header, 77 bytes (0x4d)
+0000: GET / HTTP/1.1
+0010: Host: 127.0.0.1:8080
+0026: User-Agent: curl/8.2.1
+003e: Accept: */*
+004b: 
+<= Recv header, 24 bytes (0x18)
+0000: HTTP/1.1 404 Not Found
+<= Recv header, 19 bytes (0x13)
+0000: content-length: 0
+<= Recv header, 77 bytes (0x4d)
+0000: vary: Origin, Access-Control-Request-Method, Access-Control-Requ
+0040: est-Headers
+<= Recv header, 37 bytes (0x25)
+0000: date: Mon, 22 Jan 2024 01:37:07 GMT
+<= Recv header, 2 bytes (0x2)
+0000: 
+== Info: Connection #0 to host 127.0.0.1 left intact
